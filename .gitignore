@@ -1,0 +1,52 @@
+## STM32CubeIDE / Eclipse
+.settings/
+.metadata/
+.project
+.cproject
+
+Debug/
+debug/
+Release/
+release/
+
+## CMake / Ninja
+build*/
+cmake-build*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+## Build artifacts
+*.d
+*.o
+*.obj
+*.ko
+*.elf
+*.map
+*.hex
+*.bin
+*.out
+*.exe
+
+## Libraries / shared objects
+*.a
+*.lib
+*.la
+*.lo
+*.dll
+*.so
+*.so.*
+*.dylib
+
+## Debug symbols
+*.su
+*.idb
+*.pdb
+*.dSYM/
+
+## Editor / OS
+*~
+*.swp
+Thumbs.db
+Desktop.ini
