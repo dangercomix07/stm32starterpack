@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # ---- patch_cubemx.sh (manual patch; rerun after CubeMX regen)
-set(CUBEMX_ROOT "/home/ameya/stm32starterpack/platform/stm32/nucleo_h7a3ziq")
+set(CUBEMX_ROOT "/c/Users/Ameya/Documents/IITBSSP/RPOD/stm32starterpack/platform/stm32/nucleo_h7a3ziq")
 # ---- end patch
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
