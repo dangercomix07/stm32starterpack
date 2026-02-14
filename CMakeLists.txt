@@ -4,7 +4,7 @@ project(stm32starterpack C ASM)
 
 # -------------------- Board selection --------------------
 set(STM32_BOARD "nucleo_h7a3ziq" CACHE STRING "Board name under platform/stm32/")
-set(STM32_CUBEMX_DIR "${CMAKE_SOURCE_DIR}/platform/stm32/${STM32_BOARD}/cubemx"
+set(STM32_CUBEMX_DIR "${CMAKE_SOURCE_DIR}/platform/stm32/${STM32_BOARD}"
     CACHE PATH "CubeMX generated project root")
 
 message(STATUS "STM32_BOARD     = ${STM32_BOARD}")
