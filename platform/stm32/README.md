@@ -3,14 +3,12 @@
 After every CubeMX “Generate Code”, run:
 
 ```bash
-cd platform/stm32
-./patch_cubemx.sh <board>
+./platform/stm32/patch_cubemx.sh platform/stm32/<board>
 ```
 Example:
 
 ```bash
-cd platform/stm32
-./patch_cubemx.sh nucleo_h7a3ziq
+./platform/stm32/patch_cubemx.sh platform/stm32/nucleo_h7a3ziq
 ```
 
 Never edit files under `<board>/`  manually except via this patch.

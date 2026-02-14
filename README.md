@@ -13,7 +13,7 @@ In this repo, CubeMX is nested under `platform/`, so you must patch after every 
 From repo root:
 
 ```bash
-bash platform/stm32/patch_cubemx.sh platform/stm32/nucleo_h7a3ziq/cubemx
+./platform/stm32/patch_cubemx.sh platform/stm32/nucleo_h7a3ziq/cubemx
 ```
 
 ## Build using CMake Presets

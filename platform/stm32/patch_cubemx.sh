@@ -15,49 +15,50 @@ set -euo pipefail
 #
 # Example:
 #   ./patch_cubemx.sh nucleo_h7a3ziq/cubemx
-#   ./patch_cubemx.sh platform/stm32/nucleo_h7a3ziq/cubemx
+#   ./patch_cubemx.sh platform/stm32/nucleo_h7a3ziq/
 
 if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <cubemx-root>"
+  echo "Usage: $0 <board-root>"
   exit 2
 fi
 
-CUBEMX_ROOT="$(cd "$1" && pwd)"
-FILE="$CUBEMX_ROOT/cmake/stm32cubemx/CMakeLists.txt"
+BOARD_ROOT="$(cd "$1" && pwd)"
+FILE="$BOARD_ROOT/cmake/stm32cubemx/CMakeLists.txt"
 
 if [[ ! -f "$FILE" ]]; then
   echo "ERROR: Not found: $FILE"
+  echo "Expected: <board-root>/cmake/stm32cubemx/CMakeLists.txt"
   exit 1
 fi
 
-echo "[patch] Target: $FILE"
+echo "[patch] TARGET = $FILE"
+echo "[patch] BOARD_ROOT = $BOARD_ROOT"
 
-# 0) If the file doesn't contain the problematic pattern, do nothing.
+# If the file doesn't contain the problematic pattern, do nothing.
 if ! grep -q '\${CMAKE_SOURCE_DIR}/' "$FILE"; then
   echo "[patch] No \${CMAKE_SOURCE_DIR}/ pattern found. Nothing to do."
   exit 0
 fi
 
-# 1a) Repair the common broken patch variant ("/../..")
-perl -i -pe 's|get_filename_component\(CUBEMX_ROOT\s+"\/\.\.\/\.\."\s+ABSOLUTE\)|get_filename_component(CUBEMX_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)|g' "$FILE"
+# 1) Remove any previous injected patch block (safe to run multiple times).
+perl -0777 -i -pe '
+  s/\n# ---- patch_cubemx\.sh.*?# ---- end patch\n//gs
+' "$FILE"
 
-# 1) Insert CUBEMX_ROOT definition once (right after cmake_minimum_required(...)).
-# CubeMX root is two levels up from cmake/stm32cubemx/
-if ! grep -q 'get_filename_component(CUBEMX_ROOT' "$FILE"; then
-  echo "[patch] Inserting CUBEMX_ROOT definition..."
-  perl -0777 -i -pe '
-    s/(cmake_minimum_required\([^\)]*\)\s*\n)/$1
+# 2) Insert a correct definition right after cmake_minimum_required(...)
+#    Inject the absolute path as a literal string.
+perl -0777 -i -pe 's/(cmake_minimum_required\([^\)]*\)\s*\n)/$1
 # ---- patch_cubemx.sh (manual patch; rerun after CubeMX regen)
-get_filename_component(CUBEMX_ROOT "${CMAKE_CURRENT_LIST_DIR}\/..\/.." ABSOLUTE)
+set(CUBEMX_ROOT "__BOARD_ROOT__")
 # ---- end patch
-/;
-  ' "$FILE"
-else
-  echo "[patch] CUBEMX_ROOT already present."
-fi
+/;' "$FILE"
 
-# 2) Rewrite paths
+# Replace placeholder with actual path (escape backslashes just in case).
+ESCAPED_BOARD_ROOT=$(printf '%s\n' "$BOARD_ROOT" | sed 's/[\/&]/\\&/g')
+sed -i "s/__BOARD_ROOT__/${ESCAPED_BOARD_ROOT}/g" "$FILE"
+
+# 3) Rewrite paths
 echo "[patch] Rewriting \${CMAKE_SOURCE_DIR}/ -> \${CUBEMX_ROOT}/ ..."
 perl -i -pe 's/\$\{CMAKE_SOURCE_DIR\}\//\$\{CUBEMX_ROOT\}\//g' "$FILE"
 
-echo "[patch] Done."
+echo "[patch] DONE."
