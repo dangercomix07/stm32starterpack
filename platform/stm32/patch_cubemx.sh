@@ -31,34 +31,55 @@ if [[ ! -f "$FILE" ]]; then
   exit 1
 fi
 
-echo "[patch] TARGET = $FILE"
-echo "[patch] BOARD_ROOT = $BOARD_ROOT"
+echo "[PATCH] TARGET = $FILE"
+echo "[PATCH] BOARD_ROOT = $BOARD_ROOT"
 
-# If the file doesn't contain the problematic pattern, do nothing.
-if ! grep -q '\${CMAKE_SOURCE_DIR}/' "$FILE"; then
-  echo "[patch] No \${CMAKE_SOURCE_DIR}/ pattern found. Nothing to do."
+## Deciding if patch is needed:
+need_patch=0
+
+# A) If CubeMX still uses ${CMAKE_SOURCE_DIR}/ anywhere, we must patch.
+if grep -q '\${CMAKE_SOURCE_DIR}/' "$FILE"; then
+  need_patch=1
+fi
+
+# B) If CUBEMX_ROOT line is missing or doesnt match the expected pattern, we must patch.
+if ! grep -q 'get_filename_component(CUBEMX_ROOT' "$FILE"; then
+  need_patch=1
+else
+  # Extract the path from the CUBEMX_ROOT line and check if it looks sane
+  if ! grep -q 'get_filename_component(CUBEMX_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)' "$FILE"; then
+    need_patch=1
+  fi
+fi
+
+if [[ "$need_patch" -eq 0 ]]; then
+  echo "[PATCH] Already OK (no \${CMAKE_SOURCE_DIR}/ and CUBEMX_ROOT looks sane)."
   exit 0
 fi
 
-# 1) Remove any previous injected patch block (safe to run multiple times).
-perl -0777 -i -pe '
-  s/\n# ---- patch_cubemx\.sh.*?# ---- end patch\n//gs
-' "$FILE"
+echo "[PATCH] Patching required."
 
-# 2) Insert a correct definition right after cmake_minimum_required(...)
-#    Inject the absolute path as a literal string.
-perl -0777 -i -pe 's/(cmake_minimum_required\([^\)]*\)\s*\n)/$1
-# ---- patch_cubemx.sh (manual patch; rerun after CubeMX regen)
-set(CUBEMX_ROOT "__BOARD_ROOT__")
-# ---- end patch
-/;' "$FILE"
+tmp="$(mktemp)"
 
-# Replace placeholder with actual path (escape backslashes just in case).
-ESCAPED_BOARD_ROOT=$(printf '%s\n' "$BOARD_ROOT" | sed 's/[\/&]/\\&/g')
-sed -i "s/__BOARD_ROOT__/${ESCAPED_BOARD_ROOT}/g" "$FILE"
+# 1) Remove ANY existing CUBEMX_ROOT definition line (good/bad/ugly)
+grep -vE '^[[:space:]]*get_filename_component[[:space:]]*\([[:space:]]*CUBEMX_ROOT\b' "$FILE" > "$tmp"
 
-# 3) Rewrite paths
-echo "[patch] Rewriting \${CMAKE_SOURCE_DIR}/ -> \${CUBEMX_ROOT}/ ..."
-perl -i -pe 's/\$\{CMAKE_SOURCE_DIR\}\//\$\{CUBEMX_ROOT\}\//g' "$FILE"
+# 2) Insert correct definition right after cmake_minimum_required(...)
+awk '
+  BEGIN { inserted=0 }
+  { print }
+  (!inserted && $0 ~ /^cmake_minimum_required\(/) {
+    print ""
+    print "# ---- patch_cubemx.sh (manual patch; rerun after CubeMX regen)"
+    print "get_filename_component(CUBEMX_ROOT \"${CMAKE_CURRENT_LIST_DIR}/../..\" ABSOLUTE)"
+    print "# ---- end patch"
+    inserted=1
+  }
+' "$tmp" > "$FILE"
 
-echo "[patch] DONE."
+rm -f "$tmp"
+
+# 3) Rewrite ${CMAKE_SOURCE_DIR}/... -> ${CUBEMX_ROOT}/...
+sed -i 's|${CMAKE_SOURCE_DIR}/|${CUBEMX_ROOT}/|g' "$FILE"
+
+echo "[PATCH] DONE."
