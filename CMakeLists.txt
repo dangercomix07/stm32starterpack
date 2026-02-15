@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(stm32starterpack C ASM)
+project(stm32starterpack C CXX ASM)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # -------------------- Board selection --------------------
 set(STM32_BOARD "nucleo_h7a3ziq" CACHE STRING "Board name under platform/stm32/")
@@ -80,3 +83,13 @@ target_link_options(${PROJECT_NAME} PRIVATE
 # -------------------- Your app code (outside CubeMX) --------------------
 # target_sources(${PROJECT_NAME} PRIVATE app/src/foo.c)
 # target_include_directories(${PROJECT_NAME} PRIVATE app/include)
+
+# Add your app sources
+target_sources(${PROJECT_NAME} PRIVATE
+  ${CMAKE_SOURCE_DIR}/app/src/app.cpp
+)
+
+# Add include path for app headers
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${CMAKE_SOURCE_DIR}/app/include
+)
