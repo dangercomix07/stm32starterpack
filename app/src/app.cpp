@@ -23,9 +23,20 @@ void App::init() {
 }
 
 void App::loop() {
-    // LED Blinking
+    // LED Blinking 
+    // Bouncing Up and Down LED1, LED2, LED3
+    HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
     HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
     HAL_Delay(100);
+    HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
+    HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
+    HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
 }
 
 } // namespace app
