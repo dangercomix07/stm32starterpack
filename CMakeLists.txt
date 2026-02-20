@@ -80,16 +80,30 @@ target_link_options(${PROJECT_NAME} PRIVATE
   -Wl,--start-group -lc -lm -Wl,--end-group
 )
 
-# -------------------- Your app code (outside CubeMX) --------------------
-# target_sources(${PROJECT_NAME} PRIVATE app/src/foo.c)
-# target_include_directories(${PROJECT_NAME} PRIVATE app/include)
+# # -------------------- Your app code (outside CubeMX) --------------------
+# # target_sources(${PROJECT_NAME} PRIVATE app/src/foo.c)
+# # target_include_directories(${PROJECT_NAME} PRIVATE app/include)
 
-# Add your app sources
-target_sources(${PROJECT_NAME} PRIVATE
+# # Add your app sources
+# target_sources(${PROJECT_NAME} PRIVATE
+#   ${CMAKE_SOURCE_DIR}/app/src/app.cpp
+# )
+
+# # Add include path for app headers
+# target_include_directories(${PROJECT_NAME} PRIVATE
+#   ${CMAKE_SOURCE_DIR}/app/include
+# )
+
+add_library(app STATIC
   ${CMAKE_SOURCE_DIR}/app/src/app.cpp
 )
 
-# Add include path for app headers
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(app PUBLIC
   ${CMAKE_SOURCE_DIR}/app/include
 )
+
+# IMPORTANT: app needs CubeMX headers (main.h, HAL, etc.) and compile defs/flags
+target_link_libraries(app PUBLIC stm32cubemx)
+
+# Firmware target links both CubeMX interface and app (plain signature, to match CubeMX CMake)
+target_link_libraries(${PROJECT_NAME} stm32cubemx app)
